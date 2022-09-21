@@ -1,1 +1,1 @@
-# CDD_compound_registration_-DegraderStudio
+# CDD_compound_registration_DegraderStudio
