@@ -24,7 +24,7 @@ jobs:
       - run:
           name: "Deploy Container"
           command: |
-            mkdir -p /projects2/common/CDD_API_compound_reg/$CIRCLE_BRANCH && rsync CDD_API_compound_reg.sif /projects2/common/CDD_API_compound_reg/$CIRCLE_BRANCH/CDD_API_compound_reg.sif
+            mkdir -p /projects2/common/CDD_API_compound_reg_degraderstudio/$CIRCLE_BRANCH && rsync CDD_API_compound_reg.sif /projects2/common/CDD_API_compound_reg_degraderstudio/$CIRCLE_BRANCH/CDD_API_compound_reg.sif
 # Invoke jobs via workflows
 workflows:
   build-container:
