@@ -2,9 +2,51 @@ import pandas as pd
 import requests
 import json
 import os
+from rdkit import Chem
+from rdkit.Chem.rdmolops import AssignStereochemistryFrom3D
+from rdkit.Chem.rdmolfiles import SmilesWriteParams, CXSmilesFields, MolToMolBlock
+from rdkit.Chem.MolStandardize import rdMolStandardize
+
+def uncharge(mol):
+    uncharger = rdMolStandardize.Uncharger(canonicalOrder=True)
+    res = uncharger.uncharge(mol)
+    res.UpdatePropertyCache(strict=False)
+
+    return res
 
 
-def com_reg(file_path, mol_df, mytoken, projects, hypothesis, creators):
+def addEnhancedStereoAnnotations(m):
+    gpLookup = {Chem.StereoGroupType.STEREO_OR:"or",
+                Chem.StereoGroupType.STEREO_AND:"&",
+                Chem.StereoGroupType.STEREO_ABSOLUTE:"abs",
+               }
+    sgs = m.GetStereoGroups()
+    for i,sg in enumerate(sgs):
+        typ = gpLookup[sg.GetGroupType()]
+        for at in sg.GetAtoms():
+            nt = ""
+            if at.HasProp("atomNote"):
+                nt += at.GetProp("atomNote")+","
+            nt += f"{typ}{i+1}"
+            at.SetProp("atomNote",nt)
+
+
+def standardizeMolecule(mol):
+    params = SmilesWriteParams()
+    params.isomericSmiles = False
+    params.kekuleSmiles = False
+    params.rootedAtAtom = -1
+    params.canonical = True
+    params.allBondsExplicit = False
+    params.allHsExplicit = False
+
+    unchargedMol = uncharge(mol)
+    addEnhancedStereoAnnotations(unchargedMol)
+
+    return Chem.MolToCXSmiles(unchargedMol, params, CXSmilesFields.CX_ENHANCEDSTEREO)
+
+
+def com_reg(file_path, protac, mytoken, projects, hypothesis, creators):
     """
     register compounds into CDD, usage only for Psivant
     Args:
@@ -30,24 +72,25 @@ def com_reg(file_path, mol_df, mytoken, projects, hypothesis, creators):
     headers = token_dic
     file_name = os.path.split(file_path)[-1]
     synonym_root = file_name[:-4].strip().replace(' ','_')
-    for idx in mol_df.index.tolist():
-        synonym = '_'.join([synonym_root, str(mol_df.iloc[idx]['ID'])]) 
+    for idx in range(len(protac)):
+        synonym = '_'.join([synonym_root, str(idx+1)]) 
+        smile = standardizeMolecule(protac[idx])
         data_package = {"molecule": {"synonyms":[synonym],
-                                     "smiles":mol_df['Smiles'][idx]},
+                                    "smiles":smile},
                         "projects":[projects],
                         "batch_fields": {"Hypothesis": hypothesis,
-                                         "Ideated By": creators}
+                                        "Ideated By": creators}
                         }
         response = requests.post(url, headers=headers, data=json.dumps(data_package))
         if response.status_code==200:
             print(f"{response.json()['molecule_batch_identifier']} registered")
-            registration_dict[mol_df.iloc[idx]['Smiles']] = [response.json()['molecule']['name'], response.json()['name']]
+            registration_dict[smile] = [response.json()['molecule']['name'], response.json()['name']]
         else:
             print(response.json()['error'])
-    return mol_df, registration_dict
+    return protac, registration_dict
     
 
-def save_to_csv(mol_df, registration_dict, file_path):
+def save_to_csv(protac, registration_dict, file_path):
     """
     save the registered #SiTX to csv
     Args:
@@ -61,7 +104,7 @@ def save_to_csv(mol_df, registration_dict, file_path):
     """
     if len(mol_df)!=len(registration_dict):
         print('Some compounds in the list are not successfully registered.')   
-    mol_df['molecule_batch_identifier'] = mol_df['Smiles'].map(registration_dict)
+    mol_df = pd.DataFrame(registration_dict.items(), columns=['Smiles', 'molecule_batch_identifier'])
     split_df = pd.DataFrame(mol_df['molecule_batch_identifier'].tolist(), columns=['SiTX', 'Batch'])
     df = pd.concat([mol_df, split_df], axis=1)
     df = df.drop('molecule_batch_identifier', axis=1)

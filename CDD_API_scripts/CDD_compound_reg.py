@@ -37,14 +37,13 @@ def main():
         mytoken = yaml.safe_load(f)
 
     # %%
-    # load the sdf file with smiles
-    mol_df = rdkit.Chem.PandasTools.LoadSDF(file_path, idName='ID', molColName=None, includeFingerprints=False, 
-                                            isomericSmiles=True, smilesName='Smiles', embedProps=False, removeHs=True, strictParsing=True)
+    # load the sdf file with 3D structures
+    protac = Chem.SDMolSupplier(file_path, removeHs=True)
 
     # %%
-    mol_df, registration_dict = util.com_reg(file_path, mol_df, mytoken, projects, hypothesis, creators)
-    util.save_to_csv(mol_df, registration_dict, file_path)
-    print(f'HTTP 200, {len(mol_df)} molecules has been registered')
+    protac, registration_dict = util.com_reg(file_path, protac, mytoken, projects, hypothesis, creators)
+    util.save_to_csv(protac, registration_dict, file_path)
+    print(f'HTTP 200, {len(protac)} molecules has been registered')
 
     # %%
 
