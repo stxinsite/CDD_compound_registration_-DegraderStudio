@@ -51,14 +51,14 @@ def com_reg(file_path, protac, mytoken, projects, hypothesis, creators):
     register compounds into CDD, usage only for Psivant
     Args:
         file_path(str): path of the sdf file
-        mol_df(dataframe): load sdf with smiles
+        protac(list): 3D structures read from mol
         mytoken: open the CDD token file and close after using
         projects: 'PLT_BRD4', 'PLT_KRAS_Degrader', 'PLT_SMARCA2', 'TEST'
         hypothesis: Design cycle number
         creators: Name of the designer
 
     Returns:
-        mol_df(dataframe): smiles and SiTX#
+        protac(list): 3D structures read from mol
         registration_dict(dictionary): dictionary of index and smiles
         
     Raises:
@@ -94,7 +94,7 @@ def save_to_csv(protac, registration_dict, file_path):
     """
     save the registered #SiTX to csv
     Args:
-        mol_df(dataframe): pandas dataframe after reading a 
+        protac(list): 3D structures read from mol
         registration_list(list): record the time point when the session starts
         file_path(str): open the data file and close after using
     Returns:
@@ -102,8 +102,8 @@ def save_to_csv(protac, registration_dict, file_path):
     Raises:
         ValueError: Some compounds in the mol_df list are not successfully registered
     """
-    if len(mol_df)!=len(registration_dict):
-        print('Some compounds in the list are not successfully registered.')   
+    if len(protac)!=len(registration_dict):
+        print('Some compounds in the list are not successfully registered.') 
     mol_df = pd.DataFrame(registration_dict.items(), columns=['Smiles', 'molecule_batch_identifier'])
     split_df = pd.DataFrame(mol_df['molecule_batch_identifier'].tolist(), columns=['SiTX', 'Batch'])
     df = pd.concat([mol_df, split_df], axis=1)

@@ -19,7 +19,7 @@ def main():
     parser = argparse.ArgumentParser(description='compounds registration into CDD, only for DegraderStudio projects')
     parser.add_argument('file_path', type=str)
     parser.add_argument('projects', type=str, help="Should be one of 'PLT_BRD4/PLT_KRAS_Degrader/PLT_SMARCA2/TEST")
-    parser.add_argument('hypothesis', type=str, help='Design cycle #')
+    parser.add_argument('hypothesis', type=str, help='')
     parser.add_argument('creators', type=str, help='Name of the designer')
     args = parser.parse_args()
     file_path = args.file_path
