@@ -32,6 +32,7 @@ def addEnhancedStereoAnnotations(m):
 
 
 def standardizeMolecule(mol):
+    """standardization methodology curtesy of Alex Liholips"""
     params = SmilesWriteParams()
     params.isomericSmiles = False
     params.kekuleSmiles = False

@@ -3,7 +3,7 @@ version: 2.1
 
 # Define a job to be invoked later in a workflow.
 jobs:
-  build-cdd-compound-registration:
+  build-cdd-compound-registration-dynamite:
     machine: true
     resource_class: stxinsite-ns/NeoRunner
     # Add steps to the job
@@ -14,19 +14,19 @@ jobs:
           command: | 
             echo $CDD_key > key.yaml
       - run: 
-          name: "Build CDD-API Container" 
-          command: "srun -N 1 -n 1 -c 8 -p debug --qos restrained --account=jenkins bash -c \"mkdir /scratch/\\$SLURM_JOB_ID && export SINGULARITY_TMPDIR=/scratch/\\$SLURM_JOB_ID && singularity build --fakeroot CDD_API_compound_reg.sif CDD_API_compound_reg.def && rm -rf /scratch/\\$SLURM_JOB_ID\""
+          name: "Build CDD_API_compound_reg_dynamite Container" 
+          command: "srun -N 1 -n 1 -c 8 -p debug --qos restrained --account=jenkins bash -c \"mkdir /scratch/\\$SLURM_JOB_ID && export SINGULARITY_TMPDIR=/scratch/\\$SLURM_JOB_ID && singularity build --fakeroot CDD_API_compound_reg_dynamite.sif CDD_API_compound_reg_dynamite.def && rm -rf /scratch/\\$SLURM_JOB_ID\""
       - run:
           name: "Push to Registry"
           command: |
             echo $ghcr_token | singularity remote login -u li-songlu --password-stdin oras://ghcr.io
-            singularity --debug push ./CDD_API_compound_reg.sif oras://ghcr.io/stxinsite/cdd-data-upload:$CIRCLE_BRANCH
+            singularity --debug push ./CDD_API_compound_reg_dynamite.sif oras://ghcr.io/stxinsite/cdd-data-upload:$CIRCLE_BRANCH
       - run:
           name: "Deploy Container"
           command: |
-            mkdir -p /projects2/common/CDD_API_compound_reg_degraderstudio/$CIRCLE_BRANCH && rsync CDD_API_compound_reg.sif /projects2/common/CDD_API_compound_reg_degraderstudio/$CIRCLE_BRANCH/CDD_API_compound_reg.sif
+            mkdir -p /projects2/common/CDD_API_compound_reg_degraderstudio/$CIRCLE_BRANCH && rsync CDD_API_compound_reg_dynamite.sif /projects2/common/CDD_API_compound_reg_degraderstudio/$CIRCLE_BRANCH/CDD_API_compound_reg_dynamite.sif
 # Invoke jobs via workflows
 workflows:
   build-container:
     jobs:
-      - build-cdd-compound-registration
+      - build-cdd-compound-registration-dynamite

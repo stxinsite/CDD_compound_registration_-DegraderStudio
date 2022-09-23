@@ -109,4 +109,4 @@ From: debian:buster
   HTTPS_PROXY="http://stxfrontend002:3128" ; export HTTPS_PROXY
 
 %runscript
-  python /CDD_API_scripts/CDD_compound_reg.py "$@"
+  python /CDD_API_scripts/CDD_compound_reg_dynamite.py "$@"
