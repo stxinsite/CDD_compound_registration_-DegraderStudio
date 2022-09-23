@@ -17,4 +17,4 @@ Test run example:
 
 cd /bgfs01/insite02/songlu.li/
 
-singularity run -H ${PWD} /projects2/common/CDD_API_compound_reg_degraderstudio/main/CDD_API_compound_reg_dynamite.sif test_compound_DMSO.sdf TEST test_hypothesis 'Songlu Li'
+singularity run -H ${PWD} /projects2/common/CDD_API_compound_reg_degraderstudio/main/CDD_API_compound_reg_dynamite.sif design_set_001.sdf TEST test_hypothesis 'Songlu Li'
