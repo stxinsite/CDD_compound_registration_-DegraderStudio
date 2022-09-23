@@ -1,0 +1,112 @@
+Bootstrap: docker
+From: debian:buster
+
+
+%help
+  Builds a container for compound registration into CDD through API
+
+%files
+  CDD_API_scripts/* CDD_API_scripts/
+  key.yaml CDD_API_scripts/key.yaml
+
+%post
+  export RDKIT_GIT_BRANCH=Release_2021_09
+  export RDKIT_GIT_REPO=https://github.com/rdkit/rdkit.git
+  export RDKIT_GIT_TAG=Release_2021_09_3
+
+  apt-get update
+  apt-get -y install curl ca-certificates gnupg
+
+  apt-get update
+  apt-get upgrade -y
+  apt-get install -y --no-install-recommends\
+    python3\
+    python3-dev\
+    python3-pip\
+    python3-setuptools\
+    python3-wheel\
+    python3-six\
+    build-essential\
+    libpq5\
+    libboost-dev\
+    libboost-system1.67-dev\
+    libboost-thread1.67-dev\
+    libboost-serialization1.67-dev\
+    libboost-python1.67-dev\
+    libboost-regex1.67-dev\
+    libboost-iostreams1.67-dev\
+    libfreetype6-dev\
+    libeigen3-dev\
+    zlib1g-dev\
+    libpcre3-dev\
+    libz-dev\
+    cron\
+    zip\
+    cmake\
+    g++\
+    sqlite3\
+    swig\
+    git\
+    wget\
+    openjdk-11-jdk\
+    default-jdk\
+    unzip
+    
+  apt-get clean -y
+
+  cd /usr/bin
+  rm python
+  ln -s python3 python
+  ln -s pip3 pip
+  cd /
+
+
+  pip install --upgrade pip
+  pip install --upgrade\
+    pandas==1.2.4\
+    simplejson==3.17.2\
+    requests==2.25.1\
+    numpy==1.20.3\
+    pytest==6.2.4\
+    scikit-learn==0.24.2\
+    matplotlib==3.4.2\
+    xlrd==2.0.1\
+    openpyxl==3.0.7\
+    PyYAML==6.0\
+    argparse==1.4.0\
+    glob2
+
+  git clone -b $RDKIT_GIT_BRANCH --single-branch $RDKIT_GIT_REPO
+  if [ $RDKIT_GIT_TAG ]; then cd rdkit && git fetch --tags && git checkout $RDKIT_GIT_TAG; fi
+  
+  export RDBASE=/rdkit
+  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$RDBASE/lib:$RDBASE/Code/JavaWrappers/gmwrapper:/usr/lib/x86_64-linux-gnu
+  export PYTHONPATH=$PYTHONPATH:$RDBASE
+
+  mkdir $RDBASE/build
+  cd $RDBASE/build
+  cmake -Wno-dev\
+    -D PYTHON_EXECUTABLE=/usr/bin/python3\
+    -D RDK_INSTALL_INTREE=OFF\
+    -D RDK_BUILD_INCHI_SUPPORT=ON\
+    -D RDK_BUILD_AVALON_SUPPORT=ON\
+    -D RDK_BUILD_PYTHON_WRAPPERS=ON\
+    -D RDK_BUILD_SWIG_WRAPPERS=ON\
+    -D RDK_BUILD_PGSQL=OFF\
+    -D CMAKE_INSTALL_PREFIX=/usr\
+    -D CPACK_PACKAGE_RELOCATABLE=OFF\
+    -D RDK_INSTALL_COMIC_FONTS=OFF ..
+  make -j8
+  make -j8 install
+  cd $RDBASE
+
+
+%environment
+  export TZ=Etc/GMT
+  http_proxy="http://stxfrontend002:3128" ; export http_proxy
+  https_proxy="http://stxfrontend002:3128" ; export https_proxy
+  HTTP_PROXY="http://stxfrontend002:3128" ; export HTTP_PROXY
+  HTTPS_PROXY="http://stxfrontend002:3128" ; export HTTPS_PROXY
+
+%runscript
+  python /CDD_API_scripts/CDD_compound_reg_dynamite.py "$@"
